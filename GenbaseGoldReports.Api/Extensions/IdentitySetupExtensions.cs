@@ -28,13 +28,15 @@ public static class IdentitySetupExtensions
 
             options.User.RequireUniqueEmail = true;
         })
-        .AddEntityFrameworkStores<MasterDbContext>() 
+        .AddEntityFrameworkStores<MasterDbContext>()
         .AddDefaultTokenProviders();
 
-        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
+            ?? new JwtSettings();
 
-        var jwtSettings = configuration.GetSection(JwtSettings.SectionName);
-        var secretKey = jwtSettings["Key"] ?? "GenbaseGoldReports_Secure_Default_Key_32CharsMin!";
+        var secretKey = string.IsNullOrWhiteSpace(jwtSettings.Key)
+            ? "GenbaseGoldReports_Secure_Default_Key_32CharsMin!"
+            : jwtSettings.Key;
 
         services.AddAuthentication(options =>
         {
@@ -49,8 +51,8 @@ public static class IdentitySetupExtensions
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = jwtSettings["Issuer"],
-                ValidAudience = jwtSettings["Audience"],
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
                 ClockSkew = TimeSpan.Zero
             };

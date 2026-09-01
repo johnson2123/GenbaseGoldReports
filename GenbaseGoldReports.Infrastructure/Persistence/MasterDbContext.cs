@@ -1,11 +1,12 @@
-﻿using GenbaseGoldReports.Domain.Entities;
+﻿using GenbaseGoldReports.Application.Common.Interfaces;
+using GenbaseGoldReports.Domain.Entities;
 using GenbaseGoldReports.Domain.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GenbaseGoldReports.Infrastructure.Persistence;
 
-public class MasterDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
+public class MasterDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>, IMasterDbContext
 {
     public MasterDbContext(DbContextOptions<MasterDbContext> options) : base(options)
     {
