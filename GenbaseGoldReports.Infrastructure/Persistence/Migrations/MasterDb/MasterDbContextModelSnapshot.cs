@@ -279,6 +279,9 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Identifier")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -291,6 +294,15 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("SubscriptionExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SubscriptionPlan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

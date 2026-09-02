@@ -5,7 +5,7 @@
 namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.ApplicationDb
 {
     /// <inheritdoc />
-    public partial class InitialApplicationDb : Migration
+    public partial class InitialApplicationCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

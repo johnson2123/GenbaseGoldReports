@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260828124841_InitialApplicationDb")]
-    partial class InitialApplicationDb
+    [Migration("20260902113346_InitialApplicationCreate")]
+    partial class InitialApplicationCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

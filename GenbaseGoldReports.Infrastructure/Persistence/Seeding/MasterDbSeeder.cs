@@ -38,7 +38,14 @@ public static class MasterDbSeeder
         var adminTenant = await context.Tenants.FirstOrDefaultAsync(t => t.Identifier == "admin");
         if (adminTenant == null)
         {
-            adminTenant = new Tenant("System Control Platform", "admin", masterConn);
+            // System Control Platform: Enterprise plan with no expiration
+            adminTenant = new Tenant(
+                name: "System Control Platform",
+                identifier: "admin",
+                connectionString: masterConn,
+                subscriptionPlan: TenantSubscriptionPlan.Enterprise,
+                subscriptionExpiresAtUtc: null
+            );
             await context.Tenants.AddAsync(adminTenant);
             await context.SaveChangesAsync();
         }
@@ -47,7 +54,14 @@ public static class MasterDbSeeder
         if (clientATenant == null)
         {
             var devConn = BuildTenantConnString(masterConn, "GenbaseGoldReports_ClientA");
-            clientATenant = new Tenant("Client A Testing", "clienta", devConn);
+            // Seed Client A: Standard plan expiring in 1 year
+            clientATenant = new Tenant(
+                name: "Client A Testing",
+                identifier: "clienta",
+                connectionString: devConn,
+                subscriptionPlan: TenantSubscriptionPlan.Standard,
+                subscriptionExpiresAtUtc: DateTime.UtcNow.AddYears(1)
+            );
             await context.Tenants.AddAsync(clientATenant);
             await context.SaveChangesAsync();
         }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
 {
     /// <inheritdoc />
-    public partial class InitialMasterDb : Migration
+    public partial class InitialMasterCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -64,7 +64,11 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Identifier = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     ConnectionString = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    SubscriptionPlan = table.Column<int>(type: "int", nullable: false),
+                    SubscriptionExpiresAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {

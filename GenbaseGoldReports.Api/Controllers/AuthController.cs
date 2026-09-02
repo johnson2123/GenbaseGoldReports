@@ -1,5 +1,7 @@
 ﻿using GenbaseGoldReports.Application.Common.Models;
+using GenbaseGoldReports.Application.Features.Identity.Commands.GetInitialSession;
 using GenbaseGoldReports.Application.Features.Identity.Commands.Login;
+using GenbaseGoldReports.Application.Features.Identity.Commands.Logout;
 using GenbaseGoldReports.Application.Features.Identity.Commands.RefreshToken;
 using GenbaseGoldReports.Application.Features.Identity.Dtos;
 using MediatR;
@@ -33,7 +35,6 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("refresh-token")]
-    [AllowAnonymous]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request, CancellationToken cancellationToken)
     {
         if (!Request.Cookies.TryGetValue("X-Refresh-Token", out var currentRefreshToken) || string.IsNullOrWhiteSpace(currentRefreshToken))
@@ -52,6 +53,36 @@ public class AuthController : BaseApiController
         var response = ApiResponse<AuthResponse>.Success(
             data: result,
             message: "Token refreshed successfully."
+        );
+
+        return Ok(response);
+    }
+
+    [HttpGet("me")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetInitialSession(CancellationToken cancellationToken)
+    {
+        var command = new GetInitialSessionCommand();
+        AuthResponse result = await _mediator.Send(command, cancellationToken);
+
+        SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAtUtc);
+
+        var response = ApiResponse<AuthResponse>.Success(
+            data: result,
+            message: "Session restored successfully."
+        );
+
+        return Ok(response);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutCommand? command, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(command ?? new LogoutCommand(null), cancellationToken);
+
+        var response = ApiResponse<string>.Success(
+            data: string.Empty,
+            message: "Logged out successfully."
         );
 
         return Ok(response);
