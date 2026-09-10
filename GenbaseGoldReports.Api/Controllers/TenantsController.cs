@@ -1,6 +1,7 @@
 ﻿using GenbaseGoldReports.Application.Common.Models;
 using GenbaseGoldReports.Application.Features.Tenants.Commands.CreateTenant;
 using GenbaseGoldReports.Application.Features.Tenants.Commands.ToggleTenantStatus;
+using GenbaseGoldReports.Application.Features.Tenants.Commands.UpdateTenantSubscription;
 using GenbaseGoldReports.Application.Features.Tenants.Dtos;
 using GenbaseGoldReports.Application.Features.Tenants.Queries.GetTenantsPaged;
 using MediatR;
@@ -58,6 +59,21 @@ namespace GenbaseGoldReports.Api.Controllers
             var response = ApiResponse<TenantDto>.Success(
                 data: result,
                 message: $"Tenant '{result.Name}' has been {statusText} successfully."
+            );
+
+            return Ok(response);
+        }
+
+        [HttpPut("{id:guid}/subscription")]
+        [ProducesResponseType(typeof(ApiResponse<TenantDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> UpdateTenantSubscription(Guid id, [FromBody] UpdateTenantSubscriptionRequestBody body, CancellationToken cancellationToken)
+        {
+            var command = new UpdateTenantSubscriptionCommand(id, body.SubscriptionPlan, null);
+            var result = await _mediator.Send(command, cancellationToken);
+
+            var response = ApiResponse<TenantDto>.Success(
+                data: result,
+                message: $"Subscription for tenant '{result.Name}' updated successfully."
             );
 
             return Ok(response);
