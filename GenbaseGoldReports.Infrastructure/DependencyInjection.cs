@@ -35,6 +35,12 @@ namespace GenbaseGoldReports.Infrastructure
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IOtpService, OtpService>();
 
+            services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
+            services.AddSingleton<INotificationQueue, NotificationQueue>();
+            services.AddTransient<IEmailSender, SmtpEmailSender>();
+            services.AddTransient<ISmsSender, SmsSender>();
+            services.AddHostedService<NotificationBackgroundWorker>();
+
             return services;
         }
     }
