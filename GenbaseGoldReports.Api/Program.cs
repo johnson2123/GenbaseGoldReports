@@ -11,6 +11,7 @@ builder.Host.ConfigureSerilog();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIdentityAndAuthSetup(builder.Configuration);
+builder.Services.AddCorsPolicy(builder.Configuration);
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -32,6 +33,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCorsPolicy();
 
 app.UseMiddleware<TenantResolverMiddleware>();
 

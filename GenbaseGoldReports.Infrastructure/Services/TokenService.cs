@@ -57,7 +57,7 @@ public class TokenService : ITokenService
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
 
-        var tokenString = Convert.ToBase64String(randomNumber);
+        var tokenString = Base64UrlEncoder.Encode(randomNumber);
         var expiresAtUtc = DateTime.UtcNow.AddMinutes(_jwtSettings.RefreshTokenExpireMinutes);
 
         return new RefreshTokenResult(tokenString, expiresAtUtc);

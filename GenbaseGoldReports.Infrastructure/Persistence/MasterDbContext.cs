@@ -1,6 +1,7 @@
 ﻿using GenbaseGoldReports.Application.Common.Interfaces;
 using GenbaseGoldReports.Domain.Entities;
 using GenbaseGoldReports.Domain.Entities.Identity;
+using GenbaseGoldReports.Domain.Entities.Navigation;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,8 @@ public class MasterDbContext : IdentityDbContext<ApplicationUser, ApplicationRol
     public DbSet<UserTenant> UserTenants => Set<UserTenant>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OtpLog> OtpLogs => Set<OtpLog>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<RoleMenuItem> RoleMenuItems => Set<RoleMenuItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

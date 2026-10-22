@@ -4,7 +4,6 @@ using GenbaseGoldReports.Application.Features.Identity.Dtos;
 using GenbaseGoldReports.Application.Features.Identity.Interfaces;
 using GenbaseGoldReports.Domain.Entities.Identity;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RefreshTokenEntity = GenbaseGoldReports.Domain.Entities.Identity.RefreshToken;
@@ -17,20 +16,17 @@ namespace GenbaseGoldReports.Application.Features.Identity.Commands.GetInitialSe
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITokenService _tokenService;
         private readonly ITenantContext _tenantContext;
-        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public GetInitialSessionCommandHandler(
             IMasterDbContext masterDb,
             UserManager<ApplicationUser> userManager,
             ITokenService tokenService,
-            ITenantContext tenantContext,
-            IHttpContextAccessor httpContextAccessor)
+            ITenantContext tenantContext)
         {
             _masterDb = masterDb;
             _userManager = userManager;
             _tokenService = tokenService;
             _tenantContext = tenantContext;
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<AuthResponse> Handle(GetInitialSessionCommand request, CancellationToken cancellationToken)
@@ -40,19 +36,46 @@ namespace GenbaseGoldReports.Application.Features.Identity.Commands.GetInitialSe
                 throw new ForbiddenAccessException("A valid tenant domain header (X-Tenant-Id) or subdomain is required.");
             }
 
-            var rawRefreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["X-Refresh-Token"];
-            if (string.IsNullOrWhiteSpace(rawRefreshToken))
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
             {
-                throw new UnauthorizedAccessException("Session cookie is missing.");
+                throw new UnauthorizedAccessException("Session token is missing.");
             }
 
-            var incomingHash = _tokenService.HashRefreshToken(rawRefreshToken);
+            var incomingHash = _tokenService.HashRefreshToken(request.RefreshToken);
             var storedToken = await _masterDb.RefreshTokens
                 .FirstOrDefaultAsync(rt => rt.TokenHash == incomingHash, cancellationToken);
 
-            if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiresAtUtc <= DateTime.UtcNow)
+            if (storedToken == null)
             {
-                throw new UnauthorizedAccessException("Invalid, expired, or revoked refresh token session.");
+                throw new UnauthorizedAccessException("Refresh token hash not found in Master DB.");
+            }
+
+            if (storedToken.ExpiresAtUtc <= DateTime.UtcNow)
+            {
+                throw new UnauthorizedAccessException("Refresh token session has expired.");
+            }
+
+            // Concurrency Grace Window: Handle React 18 double-mount / concurrent reload requests
+            if (storedToken.IsRevoked)
+            {
+                if (!string.IsNullOrEmpty(storedToken.ReplacedByTokenHash))
+                {
+                    var replacementToken = await _masterDb.RefreshTokens
+                        .FirstOrDefaultAsync(rt => rt.TokenHash == storedToken.ReplacedByTokenHash, cancellationToken);
+
+                    if (replacementToken != null && !replacementToken.IsRevoked && replacementToken.ExpiresAtUtc > DateTime.UtcNow)
+                    {
+                        storedToken = replacementToken;
+                    }
+                    else
+                    {
+                        throw new UnauthorizedAccessException("Refresh token was already revoked.");
+                    }
+                }
+                else
+                {
+                    throw new UnauthorizedAccessException("Refresh token was already revoked.");
+                }
             }
 
             var user = await _userManager.FindByIdAsync(storedToken.UserId.ToString());

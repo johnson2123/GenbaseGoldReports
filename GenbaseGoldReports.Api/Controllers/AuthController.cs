@@ -17,10 +17,12 @@ namespace GenbaseGoldReports.Api.Controllers
     public class AuthController : BaseApiController
     {
         private readonly ISender _mediator;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(ISender mediator)
+        public AuthController(ISender mediator, IWebHostEnvironment env)
         {
             _mediator = mediator;
+            _env = env;
         }
 
         [HttpPost("login")]
@@ -58,7 +60,7 @@ namespace GenbaseGoldReports.Api.Controllers
                 ));
             }
 
-            var command = new RefreshTokenCommand(request.ExpiredAccessToken, currentRefreshToken);
+            var command = new RefreshTokenCommand(request.ExpiredAccessToken, currentRefreshToken.Trim());
             var result = await _mediator.Send(command, cancellationToken);
 
             SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAtUtc);
@@ -78,7 +80,15 @@ namespace GenbaseGoldReports.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetInitialSession(CancellationToken cancellationToken)
         {
-            var command = new GetInitialSessionCommand();
+            if (!Request.Cookies.TryGetValue("X-Refresh-Token", out var rawRefreshToken) || string.IsNullOrWhiteSpace(rawRefreshToken))
+            {
+                return Unauthorized(ApiResponse<object>.Failure(
+                    error: "Session cookie is missing.",
+                    message: "Refresh token cookie was not provided."
+                ));
+            }
+
+            var command = new GetInitialSessionCommand(rawRefreshToken.Trim());
             var result = await _mediator.Send(command, cancellationToken);
 
             SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAtUtc);
@@ -184,12 +194,14 @@ namespace GenbaseGoldReports.Api.Controllers
 
         private void SetRefreshTokenCookie(string token, DateTime expiresAtUtc)
         {
+            var isDev = _env.IsDevelopment();
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Strict,
-                Expires = expiresAtUtc
+                Secure = true, 
+                SameSite = isDev ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = expiresAtUtc,
+                Path = "/" 
             };
 
             Response.Cookies.Append("X-Refresh-Token", token, cookieOptions);

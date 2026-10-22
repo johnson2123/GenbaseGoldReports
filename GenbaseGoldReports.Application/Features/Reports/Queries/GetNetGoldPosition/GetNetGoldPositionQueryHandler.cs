@@ -33,7 +33,8 @@ namespace GenbaseGoldReports.Application.Features.Reports.Queries.GetNetGoldPosi
                     UNION ALL SELECT 2, 'Suppliers'
                     UNION ALL SELECT 3, 'Stock on Hand'
                     UNION ALL SELECT 4, 'Stock at Factory'
-                    UNION ALL SELECT 5, 'Stock in Transit'
+                    UNION ALL SELECT 5, 'Stock at Transit'
+                    UNION ALL SELECT 6, 'Others'
                 ),
                 LedgerSummary AS (
                     SELECT 
@@ -43,6 +44,7 @@ namespace GenbaseGoldReports.Application.Features.Reports.Queries.GetNetGoldPosi
                             WHEN c.SohGroup IS NOT NULL AND a.grpcode = c.SohGroup THEN 3
                             WHEN c.WorkshopGroup IS NOT NULL AND a.grpcode = c.WorkshopGroup THEN 4
                             WHEN c.TransitGroup IS NOT NULL AND a.grpcode = c.TransitGroup THEN 5
+                            WHEN a.maingroup <= 2 THEN 6
                             ELSE 0
                         END AS CategoryId,
                         SUM(l.mtlqty) AS PureWeight
@@ -57,6 +59,7 @@ namespace GenbaseGoldReports.Application.Features.Reports.Queries.GetNetGoldPosi
                             WHEN c.SohGroup IS NOT NULL AND a.grpcode = c.SohGroup THEN 3
                             WHEN c.WorkshopGroup IS NOT NULL AND a.grpcode = c.WorkshopGroup THEN 4
                             WHEN c.TransitGroup IS NOT NULL AND a.grpcode = c.TransitGroup THEN 5
+                            WHEN a.maingroup <= 2 THEN 6
                             ELSE 0
                         END
                 )

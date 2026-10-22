@@ -1,7 +1,7 @@
 ﻿using GenbaseGoldReports.Domain.Entities;
 using GenbaseGoldReports.Domain.Entities.Identity;
+using GenbaseGoldReports.Domain.Entities.Navigation;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace GenbaseGoldReports.Application.Common.Interfaces
 {
@@ -11,6 +11,8 @@ namespace GenbaseGoldReports.Application.Common.Interfaces
         DbSet<UserTenant> UserTenants { get; }
         DbSet<RefreshToken> RefreshTokens { get; }
         DbSet<OtpLog> OtpLogs { get; }
+        DbSet<MenuItem> MenuItems { get; }
+        DbSet<RoleMenuItem> RoleMenuItems { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

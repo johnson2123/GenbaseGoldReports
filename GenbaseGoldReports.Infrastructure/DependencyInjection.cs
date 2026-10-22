@@ -2,8 +2,12 @@
 using GenbaseGoldReports.Application.Common.Options;
 using GenbaseGoldReports.Application.Features.Identity.Interfaces;
 using GenbaseGoldReports.Application.Features.Identity.Options;
+using GenbaseGoldReports.Application.Features.Reports.Queries.GetJewelleryStockBalance;
+using GenbaseGoldReports.Application.Features.Reports.Queries.GetNetGoldPosition;
+using GenbaseGoldReports.Application.Features.Reports.Queries.GetTrialBalance;
 using GenbaseGoldReports.Infrastructure.Persistence;
 using GenbaseGoldReports.Infrastructure.Services;
+using GenbaseGoldReports.Infrastructure.Services.Export;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +44,10 @@ namespace GenbaseGoldReports.Infrastructure
             services.AddTransient<IEmailSender, SmtpEmailSender>();
             services.AddTransient<ISmsSender, SmsSender>();
             services.AddHostedService<NotificationBackgroundWorker>();
+
+            services.AddScoped<IReportExportService<StockBalanceReportDto>, StockBalanceExportService>();
+            services.AddScoped<IReportExportService<NetGoldPositionReportDto>, NetGoldPositionExportService>();
+            services.AddScoped<IReportExportService<TrialBalanceReportDto>, TrialBalanceExportService>();
 
             return services;
         }

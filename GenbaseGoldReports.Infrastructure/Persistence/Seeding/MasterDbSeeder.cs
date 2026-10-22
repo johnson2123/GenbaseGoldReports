@@ -109,6 +109,7 @@ public static class MasterDbSeeder
                 await context.SaveChangesAsync();
             }
         }
+        await NavigationSeeder.SeedNavigationAsync(context);
     }
 
     private static string BuildTenantConnString(string masterConn, string dbName)

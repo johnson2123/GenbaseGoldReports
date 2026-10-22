@@ -268,6 +268,70 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                     b.ToTable("UserTenants", (string)null);
                 });
 
+            modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Navigation.MenuItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Path")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("MenuItems", (string)null);
+                });
+
+            modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Navigation.RoleMenuItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MenuItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("RoleName", "MenuItemId")
+                        .IsUnique();
+
+                    b.ToTable("RoleMenuItems", (string)null);
+                });
+
             modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -455,6 +519,27 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Navigation.MenuItem", b =>
+                {
+                    b.HasOne("GenbaseGoldReports.Domain.Entities.Navigation.MenuItem", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Navigation.RoleMenuItem", b =>
+                {
+                    b.HasOne("GenbaseGoldReports.Domain.Entities.Navigation.MenuItem", "MenuItem")
+                        .WithMany("RoleMenuItems")
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MenuItem");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("GenbaseGoldReports.Domain.Entities.Identity.ApplicationRole", null)
@@ -513,6 +598,13 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Migrations.MasterDb
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserTenants");
+                });
+
+            modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Navigation.MenuItem", b =>
+                {
+                    b.Navigation("Children");
+
+                    b.Navigation("RoleMenuItems");
                 });
 
             modelBuilder.Entity("GenbaseGoldReports.Domain.Entities.Tenant", b =>

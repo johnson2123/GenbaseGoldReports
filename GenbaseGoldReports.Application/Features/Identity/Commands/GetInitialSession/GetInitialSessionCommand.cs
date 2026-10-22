@@ -3,5 +3,5 @@ using MediatR;
 
 namespace GenbaseGoldReports.Application.Features.Identity.Commands.GetInitialSession
 {
-    public record GetInitialSessionCommand : IRequest<AuthResponse>;
+    public record GetInitialSessionCommand(string RefreshToken) : IRequest<AuthResponse>;
 }
