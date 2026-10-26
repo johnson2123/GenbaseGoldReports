@@ -34,6 +34,7 @@ namespace GenbaseGoldReports.Infrastructure
             services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
 
             services.AddDbContext<ApplicationDbContext>();
+            services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
             services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
             services.AddScoped<ITokenService, TokenService>();

@@ -1,9 +1,10 @@
 ﻿using GenbaseGoldReports.Application.Common.Interfaces;
+using GenbaseGoldReports.Domain.Entities.Sales;
 using Microsoft.EntityFrameworkCore;
 
 namespace GenbaseGoldReports.Infrastructure.Persistence;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     private readonly ITenantContext _tenantContext;
 
@@ -14,6 +15,9 @@ public class ApplicationDbContext : DbContext
         _tenantContext = tenantContext;
     }
 
+    public DbSet<Docmst> Docmsts => Set<Docmst>();
+    public DbSet<Msal> Msals => Set<Msal>();
+    public DbSet<Msaldet> Msaldets => Set<Msaldet>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
