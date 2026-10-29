@@ -41,10 +41,11 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
                    ISNULL(mtltaxrate, 0.0) AS MtlTaxRate 
             FROM metalmaster;
 
-            -- Parties (Customer list)
+            -- Parties (Strictly Customers, excluding GL accounts and header zeroes)
             SELECT accode AS Accode, acname AS Acname, ISNULL(trnno, '') AS Trnno 
             FROM accmst 
-            WHERE actype = 'C' OR actype = 'G';
+            WHERE actype = 'C' AND accode <> '0'
+            ORDER BY acname ASC;
         ";
 
             using var multi = await connection.QueryMultipleAsync(sql);

@@ -42,5 +42,8 @@
 
         public string Currcode { get; set; } = "AED";
         public decimal Currrate { get; set; } = 1.0m;
+
+        public string? Mtltype { get; set; }
+        public int? Gord { get; set; }
     }
 }

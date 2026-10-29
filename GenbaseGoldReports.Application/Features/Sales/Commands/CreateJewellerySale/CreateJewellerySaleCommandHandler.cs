@@ -21,14 +21,17 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
             var docMaster = await _context.Docmsts
-                            .FromSql($"SELECT * FROM docmst WITH (UPDLOCK, ROWLOCK) WHERE brncode = {request.Brncode} AND divcode = {request.Divcode} AND doctype = {request.Doctype}")
-                            .FirstOrDefaultAsync(cancellationToken);
+                .FromSql($"SELECT * FROM docmst WITH (UPDLOCK, ROWLOCK) WHERE brncode = {request.Brncode} AND divcode = {request.Divcode} AND doctype = {request.Doctype}")
+                .FirstOrDefaultAsync(cancellationToken);
 
             int nextDocNo = 1;
             if (docMaster != null)
             {
-                nextDocNo = docMaster.Lastdocno + 1;
-                docMaster.Lastdocno = nextDocNo;
+                if (int.TryParse(docMaster.Lastdocno, out int lastNum))
+                {
+                    nextDocNo = lastNum + 1;
+                }
+                docMaster.Lastdocno = nextDocNo.ToString();
             }
             else
             {
@@ -37,14 +40,28 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                     Brncode = request.Brncode,
                     Divcode = request.Divcode,
                     Doctype = request.Doctype,
-                    Lastdocno = nextDocNo,
+                    Lastdocno = nextDocNo.ToString(),
                     Mdoctype = "MTL",
                     Sdoctype = request.Doctype
                 };
                 _context.Docmsts.Add(docMaster);
             }
 
-            decimal gramRate = Math.Round((request.Gozrate * request.Usdrate) / ozFactor, 7);
+            var maxSlnoStr = await _context.Msals
+                .FromSql($"SELECT TOP 1 * FROM msal ORDER BY CAST(slno AS BIGINT) DESC")
+                .Select(x => x.Slno)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            long nextSlnoLong = 1;
+            if (!string.IsNullOrEmpty(maxSlnoStr) && long.TryParse(maxSlnoStr, out long parsedSlno))
+            {
+                nextSlnoLong = parsedSlno + 1;
+            }
+
+            string nextSlno = nextSlnoLong.ToString();
+
+            decimal effectiveUsdRate = request.Usdrate > 0 ? request.Usdrate : 3.67400m;
+            decimal gramRate = Math.Round((request.Gozrate / ozFactor) * effectiveUsdRate, 7);
             var currentTime = DateTime.UtcNow.ToString("HH:mm:ss");
 
             var msal = new Msal
@@ -53,45 +70,53 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                 Divcode = request.Divcode,
                 Doctype = request.Doctype,
                 Docno = nextDocNo,
+                Slno = nextSlno,
                 Mdoctype = "MTL",
                 Sdoctype = request.Doctype,
-                Docdate = request.Docdate,
+                Docdate = request.Docdate.Date,
                 Stimestamp = currentTime,
                 Partycode = request.Partycode,
                 Partyname = request.Partyname,
                 Partytrn = request.Partytrn,
                 Addr1 = request.Addr1,
-                Sman = request.Sman,
-                Ratetype = request.Ratetype,
+                Sman = string.IsNullOrEmpty(request.Sman) ? "0" : request.Sman,
+                Mtltype = "G",
+                Ratetype = string.IsNullOrEmpty(request.Ratetype) ? "GMS" : request.Ratetype,
                 Gozrate = request.Gozrate,
-                Usdrate = request.Usdrate,
+                Usdrate = effectiveUsdRate,
                 Ozfactor = ozFactor,
                 Gramrate = gramRate,
                 Curr = request.Curr,
+                Curr1 = "0",
                 Currcode = request.Curr,
                 Currrate = request.Currrate,
                 Lccurr = request.Curr,
+                Basecurr = request.Curr,
                 Fixunfix = request.Fixunfix,
-                Impexptype = request.Impexptype,
+                Impexptype = string.IsNullOrEmpty(request.Impexptype) ? "B2BSAL" : request.Impexptype,
                 Ishedging = request.Ishedging ? 1 : 0,
                 Autohedgingdocno = request.HedgingDocno,
                 Mpydocno = request.HedgingDocno,
                 Refdocno = request.Refdocno,
                 Narration = request.Narration,
-                Hnarration = request.Narration
+                Hnarration = request.Narration,
+                Loccode = "L1",
+                Usercode = "0"
             };
 
             int lineIndex = 1;
             decimal totalGrossWt = 0;
             decimal totalPureWt = 0;
-            int totalPcs = 0;
+            decimal totalPcs = 0;
             decimal totalMakingAmt = 0;
             decimal totalMetalAmt = 0;
-            decimal totalTaxAmt = 0;
+            decimal totalMakingTax = 0;
+            decimal totalMetalTax = 0;
 
             foreach (var line in request.Lines)
             {
-                decimal pureWt = Math.Round(line.Grqty * line.Apurity, 3);
+                decimal effectivePurity = line.Apurity > 0 ? line.Apurity : 0.920m;
+                decimal pureWt = Math.Round(line.Grqty * effectivePurity, 3);
                 decimal mkgAmt = Math.Round(line.Grqty * line.Mkgrate, 2);
                 decimal mtlAmt = Math.Round(pureWt * gramRate, 2);
                 decimal mkgTax = Math.Round(mkgAmt * (line.Mkgtaxrate / 100m), 2);
@@ -104,7 +129,8 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                 totalPcs += line.Pieces;
                 totalMakingAmt += mkgAmt;
                 totalMetalAmt += mtlAmt;
-                totalTaxAmt += lineTax;
+                totalMakingTax += mkgTax;
+                totalMetalTax += mtlTax;
 
                 msal.Details.Add(new Msaldet
                 {
@@ -117,19 +143,19 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                     Nfactor = -1,
                     Mdoctype = "MTL",
                     Sdoctype = request.Doctype,
-                    Docdate = request.Docdate,
+                    Docdate = request.Docdate.Date,
                     Stimestamp = currentTime,
                     Partycode = request.Partycode,
                     Impexptype = request.Impexptype,
                     Fixunfix = request.Fixunfix,
                     Sman = request.Sman,
                     Stkcode = line.Stkcode,
-                    Stksubcode = line.Stksubcode,
+                    Stksubcode = string.IsNullOrEmpty(line.Stksubcode) ? line.Stkcode : line.Stksubcode,
                     Pieces = line.Pieces,
                     Pcs = line.Pieces,
                     Grqty = line.Grqty,
-                    Apurity = line.Apurity,
-                    Spurity = line.Apurity,
+                    Apurity = effectivePurity,
+                    Spurity = effectivePurity,
                     Puqty = pureWt,
                     Mkgrate = line.Mkgrate,
                     Mkgamt = mkgAmt,
@@ -140,16 +166,22 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                     Taxamt = lineTax,
                     Totalamt = lineTotal,
                     Currcode = request.Curr,
-                    Currrate = request.Currrate
+                    Currrate = request.Currrate,
+                    Loccode = "L1",
+                    Usercode = "0",
+                    Mtltype = "G",
+                    Gord = 0
                 });
 
                 lineIndex++;
             }
 
+            decimal totalTaxAmt = totalMakingTax + totalMetalTax;
             decimal grandTotal = totalMetalAmt + totalMakingAmt + totalTaxAmt + request.Premiumamount - request.Discountamount;
+
             decimal partyAmount = request.Fixunfix == "FIX"
                 ? grandTotal
-                : totalMakingAmt + totalTaxAmt;
+                : totalMakingAmt + totalMakingTax;
 
             msal.Totpcs = totalPcs;
             msal.Pieces = totalPcs;
@@ -164,8 +196,23 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
             msal.Totgrossamt = grandTotal;
             msal.Gtotalamt = grandTotal;
             msal.Totalamount = grandTotal;
+
             msal.Partyamount = partyAmount;
             msal.Totnetamtbc = partyAmount;
+            msal.Totnetamtfc = request.Currrate > 0 ? Math.Round(partyAmount / request.Currrate, 4) : partyAmount;
+            msal.Totalpartyamt = partyAmount;
+            msal.Goldamt = totalMetalAmt;
+            msal.Makingvalue = totalMakingAmt;
+            msal.Totalvat = totalTaxAmt;
+
+            msal.Gsrate = 0.0m;
+            msal.Stnamt = 0.0m;
+            msal.Totamtfc = 0.0m;
+            msal.Amtpaid = 0.0m;
+            msal.Totdedamtfc = 0.0m;
+            msal.Totaddamtfc = 0.0m;
+            msal.Refcharges = 0.0m;
+
             msal.Premiumperc = request.Premiumperc;
             msal.Premiumamount = request.Premiumamount;
             msal.Discountperc = request.Discountperc;

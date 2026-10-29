@@ -51,6 +51,8 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
 
             builder.Property(x => x.Currcode).HasColumnName("currcode").HasMaxLength(10);
             builder.Property(x => x.Currrate).HasColumnName("currrate").HasPrecision(18, 5);
+            builder.Property(x => x.Mtltype).HasColumnName("mtltype").HasMaxLength(10);
+            builder.Property(x => x.Gord).HasColumnName("gord");
         }
     }
 }

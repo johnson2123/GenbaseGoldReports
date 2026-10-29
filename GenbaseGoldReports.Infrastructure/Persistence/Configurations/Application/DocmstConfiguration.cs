@@ -16,7 +16,7 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Brncode).HasColumnName("brncode").HasMaxLength(10);
             builder.Property(x => x.Divcode).HasColumnName("divcode").HasMaxLength(10);
             builder.Property(x => x.Doctype).HasColumnName("doctype").HasMaxLength(10);
-            builder.Property(x => x.Lastdocno).HasColumnName("LASTDOCNO");
+            builder.Property(x => x.Lastdocno).HasColumnName("LASTDOCNO").HasMaxLength(8);
             builder.Property(x => x.Docprefix).HasColumnName("docprefix").HasMaxLength(20);
             builder.Property(x => x.Mdoctype).HasColumnName("mdoctype").HasMaxLength(10);
             builder.Property(x => x.Sdoctype).HasColumnName("sdoctype").HasMaxLength(10);

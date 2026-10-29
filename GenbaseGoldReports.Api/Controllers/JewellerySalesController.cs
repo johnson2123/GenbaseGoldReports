@@ -1,5 +1,7 @@
 ﻿using GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellerySale;
+using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleById;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleInit;
+using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySalesLedger;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetPartyDetails;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -38,6 +40,31 @@ namespace GenbaseGoldReports.Api.Controllers
             return Ok(result);
         }
 
+        [HttpGet]
+        [ProducesResponseType(typeof(JewellerySalesLedgerResponse), StatusCodes.Status200OK)]
+        public async Task<ActionResult<JewellerySalesLedgerResponse>> GetSalesLedger(
+            [FromQuery] GetJewellerySalesLedgerQuery query,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpGet("{docno:int}")]
+        [ProducesResponseType(typeof(JewellerySaleDetailsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<JewellerySaleDetailsDto>> GetSaleById(
+            int docno,
+            [FromQuery] string? doctype = null,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await _mediator.Send(new GetJewellerySaleByIdQuery(docno, doctype), cancellationToken);
+            if (result == null)
+                return NotFound(new { message = $"Voucher with DocNo {docno} was not found." });
+
+            return Ok(result);
+        }
+
         [HttpPost]
         [ProducesResponseType(typeof(CreateJewellerySaleResult), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -46,9 +73,8 @@ namespace GenbaseGoldReports.Api.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(command, cancellationToken);
-            return CreatedAtAction(nameof(CreateSale), new { docno = result.Docno }, result);
+            return CreatedAtAction(nameof(GetSaleById), new { docno = result.Docno }, result);
         }
-
     }
 
 }
