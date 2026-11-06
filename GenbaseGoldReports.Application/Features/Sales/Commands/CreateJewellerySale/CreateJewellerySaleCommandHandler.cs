@@ -17,6 +17,7 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
         public async Task<CreateJewellerySaleResult> Handle(CreateJewellerySaleCommand request, CancellationToken cancellationToken)
         {
             const decimal ozFactor = 31.10350m;
+            const decimal ttbGramsFactor = 116.6380m;
 
             await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
@@ -61,7 +62,29 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
             string nextSlno = nextSlnoLong.ToString();
 
             decimal effectiveUsdRate = request.Usdrate > 0 ? request.Usdrate : 3.67400m;
-            decimal gramRate = Math.Round((request.Gozrate / ozFactor) * effectiveUsdRate, 7);
+            string rateType = (request.Ratetype ?? "GMS").ToUpper();
+            decimal gramRate = 0;
+
+            switch (rateType)
+            {
+                case "GMS":
+                    gramRate = Math.Round(request.Gozrate, 7);
+                    break;
+
+                case "TTB":
+                    gramRate = Math.Round(request.Gozrate / ttbGramsFactor, 7);
+                    break;
+
+                case "GOZ":
+                case "GZ":
+                case "GZ0":
+                case "GZ2":
+                case "GZ5":
+                default:
+                    gramRate = Math.Round((request.Gozrate / ozFactor) * effectiveUsdRate, 7);
+                    break;
+            }
+
             var currentTime = DateTime.UtcNow.ToString("HH:mm:ss");
 
             var msal = new Msal
@@ -81,7 +104,7 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                 Addr1 = request.Addr1,
                 Sman = string.IsNullOrEmpty(request.Sman) ? "0" : request.Sman,
                 Mtltype = "G",
-                Ratetype = string.IsNullOrEmpty(request.Ratetype) ? "GMS" : request.Ratetype,
+                Ratetype = rateType,
                 Gozrate = request.Gozrate,
                 Usdrate = effectiveUsdRate,
                 Ozfactor = ozFactor,
@@ -170,7 +193,12 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
                     Loccode = "L1",
                     Usercode = "0",
                     Mtltype = "G",
-                    Gord = 0
+                    Gord = 0,
+
+                    Rate = request.Gozrate,
+                    Ratetype = rateType,
+                    Gozrate = request.Gozrate,
+                    Usdrate = effectiveUsdRate
                 });
 
                 lineIndex++;
@@ -196,6 +224,13 @@ namespace GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellery
             msal.Totgrossamt = grandTotal;
             msal.Gtotalamt = grandTotal;
             msal.Totalamount = grandTotal;
+
+            // Explicit Tax Breakdown Populated
+            msal.Mkgtaxamt = totalMakingTax;
+            msal.Mkgtaxableamt = totalMakingAmt;
+            msal.Mtltaxamt = totalMetalTax;
+            msal.Mtltaxableamt = totalMetalAmt;
+            msal.Totaltaxableamt = totalMakingAmt + totalMetalAmt;
 
             msal.Partyamount = partyAmount;
             msal.Totnetamtbc = partyAmount;

@@ -12,337 +12,156 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Seeding
                 return;
             }
 
-            var utcNow = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            var menuItems = new List<MenuItem>();
+            var roleMenuItems = new List<RoleMenuItem>();
 
-            // 1. Dashboard (Common to all roles)
-            var dashboard = new MenuItem
+            MenuItem CreateItem(string title, string? path, string icon, int order, Guid? parentId = null)
             {
-                Id = Guid.NewGuid(),
-                Title = "DASHBOARD",
-                Path = "/dashboard",
-                Icon = "LayoutDashboard",
-                DisplayOrder = 1,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+                var item = new MenuItem
+                {
+                    Id = Guid.NewGuid(),
+                    Title = title,
+                    Path = path,
+                    Icon = icon,
+                    DisplayOrder = order,
+                    ParentId = parentId,
+                    IsActive = true,
+                    CreatedAtUtc = now
+                };
+                menuItems.Add(item);
+                return item;
+            }
 
-            // 2. Tenants (SuperAdmin only)
-            var tenantMgmt = new MenuItem
+            void AssignRoles(MenuItem item, params string[] roles)
             {
-                Id = Guid.NewGuid(),
-                Title = "TENANTS",
-                Path = "/tenants",
-                Icon = "Building2",
-                DisplayOrder = 2,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+                foreach (var role in roles)
+                {
+                    roleMenuItems.Add(new RoleMenuItem { MenuItemId = item.Id, RoleName = role });
+                }
+            }
 
-            // 3. Reports Parent (TenantAdmin)
-            var reportsParent = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "REPORTS",
-                Path = "/reports",
-                Icon = "FileBarChart",
-                DisplayOrder = 3,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // ==========================================
+            // 1. SUPERADMIN PLATFORM PORTAL (ISOLATED)
+            // ==========================================
+            var saDashboard = CreateItem("PLATFORM DASHBOARD", "/admin/dashboard", "LayoutDashboard", 1);
+            var saTenants = CreateItem("TENANT MANAGEMENT", "/admin/tenants", "Building2", 2);
+            var saHealth = CreateItem("SYSTEM HEALTH", "/admin/system-health", "Activity", 3);
+            var saAudit = CreateItem("PLATFORM AUDIT", "/admin/audit-logs", "ShieldAlert", 4);
 
-            var stockBalance = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = reportsParent.Id,
-                Title = "Stock Balance",
-                Path = "/reports/stock-balance",
-                Icon = "Boxes",
-                DisplayOrder = 1,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            AssignRoles(saDashboard, "SuperAdmin");
+            AssignRoles(saTenants, "SuperAdmin");
+            AssignRoles(saHealth, "SuperAdmin");
+            AssignRoles(saAudit, "SuperAdmin");
 
-            var netGoldPosition = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = reportsParent.Id,
-                Title = "Net Gold Position",
-                Path = "/reports/net-gold-position",
-                Icon = "Scale",
-                DisplayOrder = 2,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // ==========================================
+            // 2. TENANT ERP PORTAL (BUSINESS SUITE)
+            // ==========================================
 
-            var trialBalance = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = reportsParent.Id,
-                Title = "Trial Balance",
-                Path = "/reports/trial-balance",
-                Icon = "ReceiptText",
-                DisplayOrder = 3,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 1. DASHBOARD ---
+            var dashboard = CreateItem("DASHBOARD", "/dashboard", "LayoutDashboard", 1);
+            AssignRoles(dashboard, "TenantAdmin", "User");
 
-            // 4. Sales Section (TenantAdmin)
-            var salesParent = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "SALES",
-                Path = "/sales",
-                Icon = "BadgePercent",
-                DisplayOrder = 4,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 2. MASTERS (Root) ---
+            var masters = CreateItem("MASTERS", null, "FolderKanban", 2);
+            AssignRoles(masters, "TenantAdmin", "User");
 
-            var invoices = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Invoices",
-                Path = "/sales/invoices",
-                Icon = "FileText",
-                DisplayOrder = 1,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // 2.1 Account Masters
+            var accMasters = CreateItem("Account Masters", null, "Users", 1, masters.Id);
+            AssignRoles(accMasters, "TenantAdmin", "User");
+            var mAccounts = CreateItem("Accounts Master", "/masters/accounts", "BookUser", 1, accMasters.Id);
+            var mParties = CreateItem("Customer & Supplier Profiles", "/masters/parties", "Contact", 2, accMasters.Id);
+            var mSalesmen = CreateItem("Salesmen", "/masters/salesmen", "BadgeCheck", 3, accMasters.Id);
+            AssignRoles(mAccounts, "TenantAdmin", "User");
+            AssignRoles(mParties, "TenantAdmin", "User");
+            AssignRoles(mSalesmen, "TenantAdmin", "User");
 
-            var creditNotes = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Credit Notes",
-                Path = "/sales/credit-notes",
-                Icon = "FileDiff",
-                DisplayOrder = 2,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // 2.2 Stock Masters
+            var stockMasters = CreateItem("Stock Masters", null, "Boxes", 2, masters.Id);
+            AssignRoles(stockMasters, "TenantAdmin", "User");
+            var mMetal = CreateItem("Stock Item Master", "/masters/metal-items", "Gem", 1, stockMasters.Id);
+            var mBranches = CreateItem("Branch Master", "/masters/branches", "Network", 2, stockMasters.Id);
+            var mDivisions = CreateItem("Division Master", "/masters/divisions", "Layers", 3, stockMasters.Id);
+            var mRateTypes = CreateItem("Rate Type Master", "/masters/rate-types", "Sliders", 4, stockMasters.Id);
+            AssignRoles(mMetal, "TenantAdmin", "User");
+            AssignRoles(mBranches, "TenantAdmin", "User");
+            AssignRoles(mDivisions, "TenantAdmin", "User");
+            AssignRoles(mRateTypes, "TenantAdmin", "User");
 
-            var metalSalesJewellery = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Metal Sales Jewellery",
-                Path = "/sales/metal-sales-jewellery",
-                Icon = "Gem",
-                DisplayOrder = 3,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 3. TRANSACTIONS (Root) ---
+            var transactions = CreateItem("TRANSACTIONS", null, "ArrowLeftRight", 3);
+            AssignRoles(transactions, "TenantAdmin", "User");
 
-            var metalSalesBullion = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Metal Sales Bullion",
-                Path = "/sales/metal-sales-bullion",
-                Icon = "Coins",
-                DisplayOrder = 4,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // 3.1 Sales
+            var salesGroup = CreateItem("Sales", null, "BadgePercent", 1, transactions.Id);
+            AssignRoles(salesGroup, "TenantAdmin", "User");
+            var sInv = CreateItem("Invoices", "/sales/invoices", "FileText", 1, salesGroup.Id);
+            var sCn = CreateItem("Credit Notes", "/sales/credit-notes", "FileDiff", 2, salesGroup.Id);
+            var sMsj = CreateItem("Metal Sales Jewellery", "/sales/metal-sales-jewellery", "Sparkles", 3, salesGroup.Id);
+            var sMsb = CreateItem("Metal Sales Bullion", "/sales/metal-sales-bullion", "Coins", 4, salesGroup.Id);
+            var sPay = CreateItem("Metal Payment", "/sales/metal-payment", "CreditCard", 5, salesGroup.Id);
+            var sFix = CreateItem("Metal Sales Fixing", "/sales/metal-sales-fixing", "SlidersHorizontal", 6, salesGroup.Id);
+            var sHdg = CreateItem("Metal Sales Hedging", "/sales/metal-sales-hedging", "ShieldAlert", 7, salesGroup.Id);
+            AssignRoles(sInv, "TenantAdmin", "User");
+            AssignRoles(sCn, "TenantAdmin", "User");
+            AssignRoles(sMsj, "TenantAdmin", "User");
+            AssignRoles(sMsb, "TenantAdmin", "User");
+            AssignRoles(sPay, "TenantAdmin");
+            AssignRoles(sFix, "TenantAdmin");
+            AssignRoles(sHdg, "TenantAdmin");
 
-            var metalPayment = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Metal Payment",
-                Path = "/sales/metal-payment",
-                Icon = "CreditCard",
-                DisplayOrder = 5,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // 3.2 Purchases
+            var purGroup = CreateItem("Purchases", null, "ShoppingBag", 2, transactions.Id);
+            AssignRoles(purGroup, "TenantAdmin", "User");
+            var pBills = CreateItem("Bills", "/purchases/bills", "Receipt", 1, purGroup.Id);
+            var pDn = CreateItem("Debit Notes", "/purchases/debit-notes", "FileMinus", 2, purGroup.Id);
+            var pMpj = CreateItem("Metal Purchase Jewellery", "/purchases/metal-purchase-jewellery", "Sparkles", 3, purGroup.Id);
+            var pMpb = CreateItem("Metal Purchase Bullion", "/purchases/metal-purchase-bullion", "Boxes", 4, purGroup.Id);
+            var pRec = CreateItem("Metal Receipts", "/purchases/metal-receipts", "ReceiptText", 5, purGroup.Id);
+            var pFix = CreateItem("Metal Purchase Fixing", "/purchases/metal-purchase-fixing", "Pin", 6, purGroup.Id);
+            var pHdg = CreateItem("Metal Purchase Hedging", "/purchases/metal-purchase-hedging", "ShieldCheck", 7, purGroup.Id);
+            AssignRoles(pBills, "TenantAdmin", "User");
+            AssignRoles(pDn, "TenantAdmin", "User");
+            AssignRoles(pMpj, "TenantAdmin", "User");
+            AssignRoles(pMpb, "TenantAdmin", "User");
+            AssignRoles(pRec, "TenantAdmin", "User");
+            AssignRoles(pFix, "TenantAdmin");
+            AssignRoles(pHdg, "TenantAdmin");
 
-            var metalSalesFixing = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Metal Sales Fixing",
-                Path = "/sales/metal-sales-fixing",
-                Icon = "SlidersHorizontal",
-                DisplayOrder = 6,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 4. REPORTS (Root) ---
+            var reports = CreateItem("REPORTS", null, "FileBarChart", 4);
+            AssignRoles(reports, "TenantAdmin", "User");
+            var rStock = CreateItem("Stock Balance", "/reports/stock-balance", "Boxes", 1, reports.Id);
+            var rGold = CreateItem("Net Gold Position", "/reports/net-gold-position", "Scale", 2, reports.Id);
+            var rTb = CreateItem("Trial Balance", "/reports/trial-balance", "ReceiptText", 3, reports.Id);
+            AssignRoles(rStock, "TenantAdmin", "User");
+            AssignRoles(rGold, "TenantAdmin");
+            AssignRoles(rTb, "TenantAdmin");
 
-            var metalSalesHedging = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = salesParent.Id,
-                Title = "Metal Sales Hedging",
-                Path = "/sales/metal-sales-hedging",
-                Icon = "ShieldAlert",
-                DisplayOrder = 7,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 5. MAINTENANCE (Root - Business Level) ---
+            var maintenance = CreateItem("MAINTENANCE", null, "Settings", 5);
+            AssignRoles(maintenance, "TenantAdmin");
+            var mUsers = CreateItem("User & Role Access", "/maintenance/users", "UserCheck", 1, maintenance.Id);
+            var mSeq = CreateItem("Document Sequences", "/maintenance/document-series", "Hash", 2, maintenance.Id);
+            var mFiscal = CreateItem("Fiscal Periods", "/maintenance/fiscal-periods", "CalendarLock", 3, maintenance.Id);
+            var mAudit = CreateItem("System Audit Trail", "/maintenance/audit-trail", "FileSearch", 4, maintenance.Id);
+            AssignRoles(mUsers, "TenantAdmin");
+            AssignRoles(mSeq, "TenantAdmin");
+            AssignRoles(mFiscal, "TenantAdmin");
+            AssignRoles(mAudit, "TenantAdmin");
 
-            // 5. Purchases Section (TenantAdmin)
-            var purchasesParent = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                Title = "PURCHASES",
-                Path = "/purchases",
-                Icon = "ShoppingBag",
-                DisplayOrder = 5,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
+            // --- 6. OTHERS (Root) ---
+            var others = CreateItem("OTHERS", null, "MoreHorizontal", 6);
+            AssignRoles(others, "TenantAdmin", "User");
+            var oRates = CreateItem("Daily Rates Entry", "/others/daily-rates", "LineChart", 1, others.Id);
+            var oUtils = CreateItem("Data Utilities", "/others/data-utilities", "Binary", 2, others.Id);
+            AssignRoles(oRates, "TenantAdmin", "User");
+            AssignRoles(oUtils, "TenantAdmin");
 
-            var bills = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Bills",
-                Path = "/purchases/bills",
-                Icon = "Receipt",
-                DisplayOrder = 1,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var debitNotes = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Debit Notes",
-                Path = "/purchases/debit-notes",
-                Icon = "FileMinus",
-                DisplayOrder = 2,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var metalPurchaseJewellery = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Metal Purchase Jewellery",
-                Path = "/purchases/metal-purchase-jewellery",
-                Icon = "Sparkles",
-                DisplayOrder = 3,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var metalPurchaseBullion = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Metal Purchase Bullion",
-                Path = "/purchases/metal-purchase-bullion",
-                Icon = "Boxes",
-                DisplayOrder = 4,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var metalReceipts = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Metal Receipts",
-                Path = "/purchases/metal-receipts",
-                Icon = "Receipt",
-                DisplayOrder = 5,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var metalPurchaseFixing = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Metal Purchase Fixing",
-                Path = "/purchases/metal-purchase-fixing",
-                Icon = "Pin",
-                DisplayOrder = 6,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var metalPurchaseHedging = new MenuItem
-            {
-                Id = Guid.NewGuid(),
-                ParentId = purchasesParent.Id,
-                Title = "Metal Purchase Hedging",
-                Path = "/purchases/metal-purchase-hedging",
-                Icon = "ShieldCheck",
-                DisplayOrder = 7,
-                IsActive = true,
-                CreatedAtUtc = utcNow
-            };
-
-            var menuItems = new List<MenuItem>
-            {
-                dashboard,
-                tenantMgmt,
-                reportsParent,
-                stockBalance,
-                netGoldPosition,
-                trialBalance,
-                salesParent,
-                invoices,
-                creditNotes,
-                metalSalesJewellery,
-                metalSalesBullion,
-                metalPayment,
-                metalSalesFixing,
-                metalSalesHedging,
-                purchasesParent,
-                bills,
-                debitNotes,
-                metalPurchaseJewellery,
-                metalPurchaseBullion,
-                metalReceipts,
-                metalPurchaseFixing,
-                metalPurchaseHedging
-            };
-
+            // ==========================================
+            // COMMIT SEED
+            // ==========================================
             await context.MenuItems.AddRangeAsync(menuItems);
-
-            var roleMenuItems = new List<RoleMenuItem>
-            {
-                // SuperAdmin Permissions
-                new RoleMenuItem { MenuItemId = dashboard.Id, RoleName = "SuperAdmin" },
-                new RoleMenuItem { MenuItemId = tenantMgmt.Id, RoleName = "SuperAdmin" },
-
-                // TenantAdmin Core Permissions
-                new RoleMenuItem { MenuItemId = dashboard.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = reportsParent.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = stockBalance.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = netGoldPosition.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = trialBalance.Id, RoleName = "TenantAdmin" },
-
-                // TenantAdmin Sales
-                new RoleMenuItem { MenuItemId = salesParent.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = invoices.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = creditNotes.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalSalesJewellery.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalSalesBullion.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalPayment.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalSalesFixing.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalSalesHedging.Id, RoleName = "TenantAdmin" },
-
-                // TenantAdmin Purchases
-                new RoleMenuItem { MenuItemId = purchasesParent.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = bills.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = debitNotes.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalPurchaseJewellery.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalPurchaseBullion.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalReceipts.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalPurchaseFixing.Id, RoleName = "TenantAdmin" },
-                new RoleMenuItem { MenuItemId = metalPurchaseHedging.Id, RoleName = "TenantAdmin" },
-
-                // User Permissions
-                new RoleMenuItem { MenuItemId = dashboard.Id, RoleName = "User" }
-            };
-
             await context.RoleMenuItems.AddRangeAsync(roleMenuItems);
             await context.SaveChangesAsync();
         }

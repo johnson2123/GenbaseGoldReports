@@ -50,21 +50,21 @@ public static class MasterDbSeeder
             await context.SaveChangesAsync();
         }
 
-        var clientATenant = await context.Tenants.FirstOrDefaultAsync(t => t.Identifier == "clienta");
-        if (clientATenant == null)
-        {
-            var devConn = BuildTenantConnString(masterConn, "GenbaseGoldReports_ClientA");
-            // Seed Client A: Standard plan expiring in 1 year
-            clientATenant = new Tenant(
-                name: "Client A Testing",
-                identifier: "clienta",
-                connectionString: devConn,
-                subscriptionPlan: TenantSubscriptionPlan.Standard,
-                subscriptionExpiresAtUtc: DateTime.UtcNow.AddYears(1)
-            );
-            await context.Tenants.AddAsync(clientATenant);
-            await context.SaveChangesAsync();
-        }
+        //var clientATenant = await context.Tenants.FirstOrDefaultAsync(t => t.Identifier == "clienta");
+        //if (clientATenant == null)
+        //{
+        //    var devConn = BuildTenantConnString(masterConn, "GenbaseGoldReports_ClientA");
+        //    // Seed Client A: Standard plan expiring in 1 year
+        //    clientATenant = new Tenant(
+        //        name: "Client A Testing",
+        //        identifier: "clienta",
+        //        connectionString: devConn,
+        //        subscriptionPlan: TenantSubscriptionPlan.Standard,
+        //        subscriptionExpiresAtUtc: DateTime.UtcNow.AddYears(1)
+        //    );
+        //    await context.Tenants.AddAsync(clientATenant);
+        //    await context.SaveChangesAsync();
+        //}
 
         var superUser = await userManager.FindByEmailAsync(superAdminEmail);
         if (superUser == null)
@@ -88,27 +88,27 @@ public static class MasterDbSeeder
             }
         }
 
-        var clientUser = await userManager.FindByEmailAsync(clientAdminEmail);
-        if (clientUser == null)
-        {
-            clientUser = new ApplicationUser
-            {
-                UserName = clientAdminEmail,
-                Email = clientAdminEmail,
-                FirstName = "ClientA",
-                LastName = "Admin",
-                EmailConfirmed = true,
-                IsActive = true
-            };
+        //var clientUser = await userManager.FindByEmailAsync(clientAdminEmail);
+        //if (clientUser == null)
+        //{
+        //    clientUser = new ApplicationUser
+        //    {
+        //        UserName = clientAdminEmail,
+        //        Email = clientAdminEmail,
+        //        FirstName = "ClientA",
+        //        LastName = "Admin",
+        //        EmailConfirmed = true,
+        //        IsActive = true
+        //    };
 
-            var result = await userManager.CreateAsync(clientUser, clientAdminPass);
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(clientUser, "TenantAdmin");
-                context.UserTenants.Add(new UserTenant(clientUser.Id, clientATenant.Id, "TenantAdmin"));
-                await context.SaveChangesAsync();
-            }
-        }
+        //    var result = await userManager.CreateAsync(clientUser, clientAdminPass);
+        //    if (result.Succeeded)
+        //    {
+        //        await userManager.AddToRoleAsync(clientUser, "TenantAdmin");
+        //        context.UserTenants.Add(new UserTenant(clientUser.Id, clientATenant.Id, "TenantAdmin"));
+        //        await context.SaveChangesAsync();
+        //    }
+        //}
         await NavigationSeeder.SeedNavigationAsync(context);
     }
 

@@ -63,6 +63,12 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Gtotalamt).HasColumnName("gtotalamt").HasPrecision(18, 2);
             builder.Property(x => x.Totalamount).HasColumnName("totalamount").HasPrecision(18, 2);
 
+            builder.Property(x => x.Mkgtaxamt).HasColumnName("mkgtaxamt").HasPrecision(18, 2);
+            builder.Property(x => x.Mkgtaxableamt).HasColumnName("mkgtaxableamt").HasPrecision(18, 2);
+            builder.Property(x => x.Mtltaxamt).HasColumnName("mtltaxamt").HasPrecision(18, 2);
+            builder.Property(x => x.Mtltaxableamt).HasColumnName("mtltaxableamt").HasPrecision(18, 2);
+            builder.Property(x => x.Totaltaxableamt).HasColumnName("totaltaxableamt").HasPrecision(18, 2);
+
             builder.Property(x => x.Goldamt).HasColumnName("goldamt").HasPrecision(18, 2);
             builder.Property(x => x.Makingvalue).HasColumnName("makingvalue").HasPrecision(18, 2);
             builder.Property(x => x.Totalvat).HasColumnName("totalvat").HasPrecision(18, 2);
@@ -91,7 +97,6 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Narration).HasColumnName("narration").HasMaxLength(500);
             builder.Property(x => x.Hnarration).HasColumnName("hnarration").HasMaxLength(500);
 
-            // One-to-Many Relationship with Msaldet
             builder.HasMany(x => x.Details)
                 .WithOne()
                 .HasForeignKey(d => new { d.Brncode, d.Divcode, d.Doctype, d.Docno })

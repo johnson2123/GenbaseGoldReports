@@ -66,7 +66,7 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
             SELECT 
                 COUNT(1) AS TotalInvoicesCount,
                 ISNULL(SUM(totpuqty), 0.0) AS TotalDispatchedPureWeight,
-                ISNULL(SUM(totmkgamt), 0.0) AS TotalMakingReceivable,
+                ISNULL(SUM(partyamount), 0.0) AS TotalMakingReceivable,
                 ISNULL(SUM(CASE WHEN fixunfix = 'UNFIX' THEN totpuqty ELSE 0.0 END), 0.0) AS TotalUnfixedGoldExposure
             FROM msal {whereClause};
 
@@ -75,6 +75,7 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
 
             -- 3. Paged Records
             SELECT 
+                slno AS Slno,
                 brncode AS Brncode,
                 divcode AS Divcode,
                 doctype AS Doctype,

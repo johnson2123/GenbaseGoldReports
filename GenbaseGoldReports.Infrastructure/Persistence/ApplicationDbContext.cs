@@ -1,4 +1,5 @@
 ﻿using GenbaseGoldReports.Application.Common.Interfaces;
+using GenbaseGoldReports.Domain.Entities.Masters;
 using GenbaseGoldReports.Domain.Entities.Sales;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Docmst> Docmsts => Set<Docmst>();
     public DbSet<Msal> Msals => Set<Msal>();
     public DbSet<Msaldet> Msaldets => Set<Msaldet>();
+    public DbSet<Accmst> Accmsts => Set<Accmst>();
+    public DbSet<Actypes> Actypes => Set<Actypes>();
+    public DbSet<Accdet> Accdets => Set<Accdet>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

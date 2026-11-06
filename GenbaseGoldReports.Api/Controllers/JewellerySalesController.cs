@@ -1,4 +1,5 @@
-﻿using GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellerySale;
+﻿using GenbaseGoldReports.Application.Common.Models;
+using GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellerySale;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleById;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleInit;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySalesLedger;
@@ -11,69 +12,70 @@ namespace GenbaseGoldReports.Api.Controllers
 {
     [Authorize]
     [Route("api/sales/jewellery")]
-    public class JewellerySalesController : ControllerBase
+    public class JewellerySalesController : BaseApiController
     {
-        private readonly IMediator _mediator;
+        private readonly ISender _mediator;
 
-        public JewellerySalesController(IMediator mediator)
+        public JewellerySalesController(ISender mediator)
         {
             _mediator = mediator;
         }
 
         [HttpGet("init")]
-        [ProducesResponseType(typeof(JewellerySaleInitDto), StatusCodes.Status200OK)]
-        public async Task<ActionResult<JewellerySaleInitDto>> GetInitData(CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiResponse<JewellerySaleInitDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetInitData(CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new GetJewellerySaleInitQuery(), cancellationToken);
-            return Ok(result);
+            return Ok(ApiResponse<JewellerySaleInitDto>.Success(result, "Initialization data loaded successfully."));
         }
 
         [HttpGet("party/{accode}")]
-        [ProducesResponseType(typeof(PartyDetailsDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<PartyDetailsDto>> GetPartyDetails(string accode, CancellationToken cancellationToken)
+        [ProducesResponseType(typeof(ApiResponse<PartyDetailsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetPartyDetails(string accode, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(new GetPartyDetailsQuery(accode), cancellationToken);
             if (result == null)
-                return NotFound(new { message = $"Party with code '{accode}' not found." });
+                return NotFound(ApiResponse<object>.Failure($"Party with code '{accode}' not found."));
 
-            return Ok(result);
+            return Ok(ApiResponse<PartyDetailsDto>.Success(result, "Party details loaded successfully."));
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(JewellerySalesLedgerResponse), StatusCodes.Status200OK)]
-        public async Task<ActionResult<JewellerySalesLedgerResponse>> GetSalesLedger(
+        [ProducesResponseType(typeof(ApiResponse<JewellerySalesLedgerResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetSalesLedger(
             [FromQuery] GetJewellerySalesLedgerQuery query,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(query, cancellationToken);
-            return Ok(result);
+            return Ok(ApiResponse<JewellerySalesLedgerResponse>.Success(result, "Sales ledger retrieved successfully."));
         }
 
         [HttpGet("{docno:int}")]
-        [ProducesResponseType(typeof(JewellerySaleDetailsDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<JewellerySaleDetailsDto>> GetSaleById(
+        [ProducesResponseType(typeof(ApiResponse<JewellerySaleDetailsDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetSaleById(
             int docno,
             [FromQuery] string? doctype = null,
             CancellationToken cancellationToken = default)
         {
             var result = await _mediator.Send(new GetJewellerySaleByIdQuery(docno, doctype), cancellationToken);
             if (result == null)
-                return NotFound(new { message = $"Voucher with DocNo {docno} was not found." });
+                return NotFound(ApiResponse<object>.Failure($"Voucher with DocNo {docno} was not found."));
 
-            return Ok(result);
+            return Ok(ApiResponse<JewellerySaleDetailsDto>.Success(result, "Voucher details retrieved successfully."));
         }
 
         [HttpPost]
-        [ProducesResponseType(typeof(CreateJewellerySaleResult), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<CreateJewellerySaleResult>> CreateSale(
+        [ProducesResponseType(typeof(ApiResponse<CreateJewellerySaleResult>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CreateSale(
             [FromBody] CreateJewellerySaleCommand command,
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(command, cancellationToken);
-            return CreatedAtAction(nameof(GetSaleById), new { docno = result.Docno }, result);
+            var response = ApiResponse<CreateJewellerySaleResult>.Success(result, "Jewellery sale posted successfully.");
+            return CreatedAtAction(nameof(GetSaleById), new { docno = result.Docno }, response);
         }
     }
 

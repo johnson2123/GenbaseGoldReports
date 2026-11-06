@@ -17,7 +17,6 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
         {
             using var connection = _connectionFactory.CreateConnection();
 
-            // 1. Fetch the voucher header safely using TOP 1
             const string headerSql = @"
             SELECT TOP 1
                 brncode AS Brncode,
@@ -45,12 +44,15 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
                 totmkgamt AS Totmkgamt,
                 totalmtlamt AS Totalmtlamt,
                 tottaxamt AS Tottaxamt,
+                ISNULL(mkgtaxamt, 0.0) AS Mkgtaxamt,
+                ISNULL(mtltaxamt, 0.0) AS Mtltaxamt,
                 totgrossamt AS Totgrossamt,
                 partyamount AS Partyamount,
                 premiumperc AS Premiumperc,
                 premiumamount AS Premiumamount,
                 discountperc AS Discountperc,
                 discountamount AS Discountamount,
+                ISNULL(refcharges, 0.0) AS Additionalamount,
                 ishedging AS Ishedging,
                 autohedgingdocno AS Autohedgingdocno,
                 refdocno AS Refdocno,
@@ -66,7 +68,6 @@ namespace GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySale
 
             if (header == null) return null;
 
-            // 2. Fetch the corresponding lines matching this exact voucher
             const string linesSql = @"
             SELECT 
                 slno AS Slno,

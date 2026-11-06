@@ -53,6 +53,11 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Currrate).HasColumnName("currrate").HasPrecision(18, 5);
             builder.Property(x => x.Mtltype).HasColumnName("mtltype").HasMaxLength(10);
             builder.Property(x => x.Gord).HasColumnName("gord");
+
+            builder.Property(x => x.Rate).HasColumnName("rate").HasPrecision(18, 4);
+            builder.Property(x => x.Ratetype).HasColumnName("ratetype").HasMaxLength(20);
+            builder.Property(x => x.Gozrate).HasColumnName("gozrate").HasPrecision(18, 4);
+            builder.Property(x => x.Usdrate).HasColumnName("usdrate").HasPrecision(18, 5);
         }
     }
 }

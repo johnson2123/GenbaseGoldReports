@@ -45,5 +45,10 @@
 
         public string? Mtltype { get; set; }
         public int? Gord { get; set; }
+
+        public decimal Rate { get; set; }
+        public string? Ratetype { get; set; }
+        public decimal Gozrate { get; set; }
+        public decimal Usdrate { get; set; }
     }
 }

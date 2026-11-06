@@ -38,6 +38,12 @@
         public decimal Premiumamount { get; init; }
         public decimal Discountperc { get; init; }
         public decimal Discountamount { get; init; }
+        public decimal Additionalamount { get; init; }
+
+        public decimal Mkgtaxamt { get; init; } 
+        public decimal Mtltaxamt { get; init; } 
+
+
         public int Ishedging { get; init; }
         public int Autohedgingdocno { get; init; }
         public string? Refdocno { get; init; }
