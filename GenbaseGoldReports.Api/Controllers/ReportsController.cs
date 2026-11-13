@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GenbaseGoldReports.Api.Controllers
 {
-    [Authorize] 
+    [Authorize]
     public class ReportsController : BaseApiController
     {
         private readonly ISender _mediator;
@@ -49,32 +49,7 @@ namespace GenbaseGoldReports.Api.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(query, cancellationToken);
-            var tenantName = !string.IsNullOrWhiteSpace(tenantContext.Identifier)
-                ? tenantContext.Identifier
-                : "Enterprise Node";
-
-            var dateStamp = query.AsOfDate.ToString("yyyyMMdd");
-            var requestedFormat = (format ?? "excel").Trim().ToLowerInvariant();
-
-            Response.Headers.Append("Access-Control-Expose-Headers", "Content-Disposition");
-
-            return requestedFormat switch
-            {
-                "pdf" => File(
-                    exportService.GeneratePdf(result, tenantName),
-                    "application/pdf",
-                    $"Stock_Balance_{dateStamp}.pdf"),
-
-                "word" => File(
-                    exportService.GenerateWord(result, tenantName),
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    $"Stock_Balance_{dateStamp}.docx"),
-
-                "excel" or _ => File(
-                    exportService.GenerateExcel(result, tenantName),
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"Stock_Balance_{dateStamp}.xlsx")
-            };
+            return ExportFile(result, "Stock_Balance", query.AsOfDate, format, exportService, tenantContext);
         }
 
         [HttpGet("net-gold-position")]
@@ -107,34 +82,8 @@ namespace GenbaseGoldReports.Api.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(query, cancellationToken);
-            var tenantName = !string.IsNullOrWhiteSpace(tenantContext.Identifier)
-                ? tenantContext.Identifier
-                : "Enterprise Node";
-
-            var dateStamp = query.AsOfDate.ToString("yyyyMMdd");
-            var requestedFormat = (format ?? "excel").Trim().ToLowerInvariant();
-
-            Response.Headers.Append("Access-Control-Expose-Headers", "Content-Disposition");
-
-            return requestedFormat switch
-            {
-                "pdf" => File(
-                    exportService.GeneratePdf(result, tenantName),
-                    "application/pdf",
-                    $"Net_Gold_Position_{dateStamp}.pdf"),
-
-                "word" => File(
-                    exportService.GenerateWord(result, tenantName),
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    $"Net_Gold_Position_{dateStamp}.docx"),
-
-                "excel" or _ => File(
-                    exportService.GenerateExcel(result, tenantName),
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"Net_Gold_Position_{dateStamp}.xlsx")
-            };
+            return ExportFile(result, "Net_Gold_Position", query.AsOfDate, format, exportService, tenantContext);
         }
-
 
         [HttpGet("trial-balance")]
         [ProducesResponseType(typeof(ApiResponse<TrialBalanceReportDto>), StatusCodes.Status200OK)]
@@ -166,11 +115,22 @@ namespace GenbaseGoldReports.Api.Controllers
             CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(query, cancellationToken);
+            return ExportFile(result, "Trial_Balance", query.AsOfDate, format, exportService, tenantContext);
+        }
+
+        private FileContentResult ExportFile<TDto>(
+            TDto data,
+            string baseFileName,
+            DateTime asOfDate,
+            string? format,
+            IReportExportService<TDto> exportService,
+            ITenantContext tenantContext)
+        {
             var tenantName = !string.IsNullOrWhiteSpace(tenantContext.Identifier)
                 ? tenantContext.Identifier
                 : "Enterprise Node";
 
-            var dateStamp = query.AsOfDate.ToString("yyyyMMdd");
+            var dateStamp = asOfDate.ToString("yyyyMMdd");
             var requestedFormat = (format ?? "excel").Trim().ToLowerInvariant();
 
             Response.Headers.Append("Access-Control-Expose-Headers", "Content-Disposition");
@@ -178,19 +138,19 @@ namespace GenbaseGoldReports.Api.Controllers
             return requestedFormat switch
             {
                 "pdf" => File(
-                    exportService.GeneratePdf(result, tenantName),
+                    exportService.GeneratePdf(data, tenantName),
                     "application/pdf",
-                    $"Trial_Balance_{dateStamp}.pdf"),
+                    $"{baseFileName}_{dateStamp}.pdf"),
 
                 "word" => File(
-                    exportService.GenerateWord(result, tenantName),
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    $"Trial_Balance_{dateStamp}.docx"),
+                    exportService.GenerateWord(data, tenantName),
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.wordprocessingml.document",
+                    $"{baseFileName}_{dateStamp}.docx"),
 
-                "excel" or _ => File(
-                    exportService.GenerateExcel(result, tenantName),
+                _ => File(
+                    exportService.GenerateExcel(data, tenantName),
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"Trial_Balance_{dateStamp}.xlsx")
+                    $"{baseFileName}_{dateStamp}.xlsx")
             };
         }
     }

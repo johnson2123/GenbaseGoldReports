@@ -7,7 +7,7 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Commands.Crea
     {
         public bool IsGroup { get; init; }
         public string Acname { get; init; } = string.Empty;
-        public string? Accode { get; init; } // Optional: server generates next if omitted/blank
+        public string? Accode { get; init; }
         public string ParentCode { get; init; } = "0";
         public string Actype { get; init; } = "G";
         public string Class { get; init; } = "010";
@@ -33,11 +33,12 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Commands.Crea
         public string? Licencenumber { get; init; }
         public string? Licencedate { get; init; }
 
+        public bool Isconfacc { get; init; }
         public decimal Purusdrate { get; init; } = 0m;
         public decimal Salusdrate { get; init; } = 0m;
         public decimal Marginperc { get; init; } = 0m;
         public decimal Marginconsumeperc { get; init; } = 0m;
 
-        public List<AccountCurrencyInputDto> AdditionalCurrencies { get; init; } = new();
+        public List<CurrencyLookupDto> AdditionalCurrencies { get; init; } = new();
     }
 }

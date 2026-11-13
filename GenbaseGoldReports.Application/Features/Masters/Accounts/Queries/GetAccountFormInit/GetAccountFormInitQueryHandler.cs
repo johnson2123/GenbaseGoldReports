@@ -19,6 +19,7 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Queries.GetAc
             string parentCode = "0";
             string parentName = "ROOT";
             int calculatedLevelId = 0;
+            string? inheritedClass = null;
 
             if (!string.IsNullOrWhiteSpace(request.ParentCode) && request.ParentCode != "0")
             {
@@ -31,6 +32,7 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Queries.GetAc
                     parentCode = parent.Code;
                     parentName = parent.Acname ?? string.Empty;
                     calculatedLevelId = (parent.Levelid ?? 0) + 1;
+                    inheritedClass = parent.Class;
                 }
             }
 
@@ -60,7 +62,62 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Queries.GetAc
                 })
                 .ToListAsync(cancellationToken);
 
-            var currencies = new List<string> { "AED", "USD", "EUR", "GBP", "SAR" };
+            var classes = await _context.Classmsts
+                .AsNoTracking()
+                .Select(cm => new ClassLookupDto
+                {
+                    Code = cm.Code,
+                    Description = cm.Descript ?? cm.Code
+                })
+                .ToListAsync(cancellationToken);
+
+            var rawCurrencies = await _context.Currmsts
+                .AsNoTracking()
+                .Where(c => !string.IsNullOrEmpty(c.Currcode))
+                .Select(c => new
+                {
+                    Currcode = c.Currcode.Trim(),
+                    Currname = c.Currname != null ? c.Currname.Trim() : c.Currcode.Trim(),
+                    Currrate = c.Currrate ?? 1.0m
+                })
+                .ToListAsync(cancellationToken);
+
+            var currencies = rawCurrencies
+                .GroupBy(c => c.Currcode, StringComparer.OrdinalIgnoreCase)
+                .Select(g => new CurrencyLookupDto
+                {
+                    Currcode = g.Key,
+                    Currname = g.First().Currname,
+                    Currrate = g.First().Currrate
+                })
+                .OrderBy(c => c.Currcode)
+                .ToList();
+
+            var config = await _context.Configmsts
+                .AsNoTracking()
+                .Select(cfg => new
+                {
+                    BaseCurr = cfg.Basecurr,
+                    TaxRate = cfg.Mkgtaxrate
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            string baseCurr = !string.IsNullOrWhiteSpace(config?.BaseCurr) ? config.BaseCurr.Trim() : "AED";
+            decimal defaultTaxRate = config?.TaxRate ?? 5.0m;
+
+            var groups = await _context.Accmsts
+                .AsNoTracking()
+                .Where(a => a.Isacc != 1)
+                .Select(a => new GroupLookupDto
+                {
+                    Code = a.Code,
+                    Name = a.Acname ?? string.Empty,
+                    LevelId = a.Levelid ?? 0,
+                    Class = a.Class
+                })
+                .OrderBy(a => a.LevelId)
+                .ThenBy(a => a.Name)
+                .ToListAsync(cancellationToken);
 
             return new AccountFormInitDto
             {
@@ -68,8 +125,13 @@ namespace GenbaseGoldReports.Application.Features.Masters.Accounts.Queries.GetAc
                 ParentCode = parentCode,
                 ParentName = parentName,
                 CalculatedLevelId = calculatedLevelId,
+                InheritedClass = inheritedClass,
+                BaseCurrency = baseCurr,
+                DefaultTaxRate = defaultTaxRate,
                 AccountTypes = accountTypes,
-                Currencies = currencies
+                Classes = classes,
+                Currencies = currencies,
+                Groups = groups
             };
         }
     }

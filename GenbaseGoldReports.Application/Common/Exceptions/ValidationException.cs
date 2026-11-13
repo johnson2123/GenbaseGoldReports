@@ -1,4 +1,6 @@
-﻿namespace GenbaseGoldReports.Application.Common.Exceptions
+﻿using FluentValidation.Results;
+
+namespace GenbaseGoldReports.Application.Common.Exceptions
 {
     public class ValidationException : Exception
     {
@@ -8,6 +10,14 @@
             : base("One or more validation failures have occurred.")
         {
             Errors = errors;
+        }
+
+        public ValidationException(IEnumerable<ValidationFailure> failures)
+            : base("One or more validation failures have occurred.")
+        {
+            Errors = failures
+                .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
+                .ToDictionary(g => g.Key, g => g.ToArray());
         }
     }
 }

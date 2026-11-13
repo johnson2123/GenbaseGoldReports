@@ -1,4 +1,6 @@
 ﻿using FluentValidation;
+using GenbaseGoldReports.Application.Common.Behaviours;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
@@ -10,9 +12,13 @@ namespace GenbaseGoldReports.Application
         {
             var assembly = Assembly.GetExecutingAssembly();
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-
             services.AddValidatorsFromAssembly(assembly);
+
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(assembly);
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
+            });
 
             return services;
         }

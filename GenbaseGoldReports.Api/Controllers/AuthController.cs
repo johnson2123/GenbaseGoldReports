@@ -105,14 +105,17 @@ namespace GenbaseGoldReports.Api.Controllers
         [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Logout([FromBody] LogoutCommand? command, CancellationToken cancellationToken)
         {
-            await _mediator.Send(command ?? new LogoutCommand(null), cancellationToken);
+            Request.Cookies.TryGetValue("X-Refresh-Token", out var cookieToken);
+            var tokenToRevoke = command?.RefreshToken ?? cookieToken;
 
-            var response = ApiResponse<string>.Success(
+            await _mediator.Send(new LogoutCommand(tokenToRevoke), cancellationToken);
+
+            DeleteRefreshTokenCookie();
+
+            return Ok(ApiResponse<string>.Success(
                 data: string.Empty,
                 message: "Logged out successfully."
-            );
-
-            return Ok(response);
+            ));
         }
 
         [Authorize]
@@ -205,6 +208,18 @@ namespace GenbaseGoldReports.Api.Controllers
             };
 
             Response.Cookies.Append("X-Refresh-Token", token, cookieOptions);
+        }
+
+        private void DeleteRefreshTokenCookie()
+        {
+            var isDev = _env.IsDevelopment();
+            Response.Cookies.Delete("X-Refresh-Token", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = isDev ? SameSiteMode.None : SameSiteMode.Lax,
+                Path = "/"
+            });
         }
     }
 }

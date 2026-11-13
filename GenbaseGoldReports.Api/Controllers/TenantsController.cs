@@ -22,6 +22,7 @@ namespace GenbaseGoldReports.Api.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse<TenantDto>), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateTenant([FromBody] CreateTenantCommand command, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(command, cancellationToken);
@@ -31,7 +32,7 @@ namespace GenbaseGoldReports.Api.Controllers
                 message: $"Tenant '{result.Name}' created successfully."
             );
 
-            return CreatedAtAction(nameof(CreateTenant), new { id = result.Id }, response);
+            return StatusCode(StatusCodes.Status201Created, response);
         }
 
         [HttpGet]

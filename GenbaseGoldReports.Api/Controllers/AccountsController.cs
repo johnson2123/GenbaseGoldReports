@@ -70,7 +70,7 @@ namespace GenbaseGoldReports.Api.Controllers
                 message: command.IsGroup ? "Group created successfully." : "Account created successfully."
             );
 
-            return CreatedAtAction(nameof(GetAccountsTree), new { search = result.Accode }, response);
+            return StatusCode(StatusCodes.Status201Created, response);
         }
     }
 }
