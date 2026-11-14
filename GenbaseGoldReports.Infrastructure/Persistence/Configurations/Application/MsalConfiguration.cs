@@ -18,7 +18,7 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Docno).HasColumnName("DOCNO");
 
             builder.Property(x => x.Slno).HasColumnName("slno").HasMaxLength(14).ValueGeneratedNever();
-            builder.Property(x => x.Mdoctype).HasColumnName("mdoctype").HasMaxLength(10);
+            builder.Property(x => x.Mpydocno).HasColumnName("mpydocno").HasConversion<string>();
             builder.Property(x => x.Sdoctype).HasColumnName("sdoctype").HasMaxLength(10);
             builder.Property(x => x.Docdate).HasColumnName("docdate");
             builder.Property(x => x.Stimestamp).HasColumnName("stimestamp").HasMaxLength(20);
@@ -89,7 +89,7 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
 
             builder.Property(x => x.Partyamount).HasColumnName("partyamount").HasPrecision(18, 2);
 
-            builder.Property(x => x.Ishedging).HasColumnName("ishedging");
+            builder.Property(x => x.Ishedging).HasColumnName("ishedging").HasConversion<short>();
             builder.Property(x => x.Autohedgingdocno).HasColumnName("autohedgingdocno");
             builder.Property(x => x.Mpydocno).HasColumnName("mpydocno");
             builder.Property(x => x.Refdocno).HasColumnName("refdocno").HasMaxLength(50);

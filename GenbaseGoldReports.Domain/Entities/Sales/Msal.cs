@@ -53,11 +53,11 @@
         public decimal Gtotalamt { get; set; }
         public decimal Totalamount { get; set; }
 
-        public decimal Mkgtaxamt { get; set; }
-        public decimal Mkgtaxableamt { get; set; }
-        public decimal Mtltaxamt { get; set; }
-        public decimal Mtltaxableamt { get; set; }
-        public decimal Totaltaxableamt { get; set; }
+        public decimal? Mkgtaxamt { get; set; }
+        public decimal? Mkgtaxableamt { get; set; }
+        public decimal? Mtltaxamt { get; set; }
+        public decimal? Mtltaxableamt { get; set; }
+        public decimal? Totaltaxableamt { get; set; }
 
 
         public decimal Goldamt { get; set; }

@@ -1,5 +1,6 @@
 ﻿using GenbaseGoldReports.Application.Common.Models;
 using GenbaseGoldReports.Application.Features.Sales.Commands.CreateJewellerySale;
+using GenbaseGoldReports.Application.Features.Sales.Commands.UpdateJewellerySale;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleById;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySaleInit;
 using GenbaseGoldReports.Application.Features.Sales.Queries.GetJewellerySalesLedger;
@@ -76,6 +77,22 @@ namespace GenbaseGoldReports.Api.Controllers
             var result = await _mediator.Send(command, cancellationToken);
             var response = ApiResponse<CreateJewellerySaleResult>.Success(result, "Jewellery sale posted successfully.");
             return CreatedAtAction(nameof(GetSaleById), new { docno = result.Docno }, response);
+        }
+
+        [HttpPut("{docno:int}")]
+        [ProducesResponseType(typeof(ApiResponse<UpdateJewellerySaleResult>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateSale(
+            int docno,
+            [FromBody] UpdateJewellerySaleCommand command,
+            CancellationToken cancellationToken)
+        {
+            if (command.Docno != 0 && command.Docno != docno)
+                return BadRequest(ApiResponse<object>.Failure("Route Docno does not match payload Docno."));
+
+            var result = await _mediator.Send(command with { Docno = docno }, cancellationToken);
+            return Ok(ApiResponse<UpdateJewellerySaleResult>.Success(result, "Jewellery sale updated successfully."));
         }
     }
 

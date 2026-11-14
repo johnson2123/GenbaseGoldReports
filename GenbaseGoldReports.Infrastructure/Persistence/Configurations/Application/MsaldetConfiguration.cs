@@ -18,7 +18,7 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Docno).HasColumnName("DOCNO");
             builder.Property(x => x.Slno).HasColumnName("slno");
             builder.Property(x => x.Slno2).HasColumnName("slno2");
-            builder.Property(x => x.Nfactor).HasColumnName("nfactor").HasPrecision(18, 2);
+            builder.Property(x => x.Nfactor).HasColumnName("nfactor").HasConversion<int>();
 
             builder.Property(x => x.Mdoctype).HasColumnName("mdoctype").HasMaxLength(10);
             builder.Property(x => x.Sdoctype).HasColumnName("sdoctype").HasMaxLength(10);
@@ -52,7 +52,7 @@ namespace GenbaseGoldReports.Infrastructure.Persistence.Configurations.Applicati
             builder.Property(x => x.Currcode).HasColumnName("currcode").HasMaxLength(10);
             builder.Property(x => x.Currrate).HasColumnName("currrate").HasPrecision(18, 5);
             builder.Property(x => x.Mtltype).HasColumnName("mtltype").HasMaxLength(10);
-            builder.Property(x => x.Gord).HasColumnName("gord");
+            builder.Property(x => x.Gord).HasColumnName("gord").HasConversion<string>();
 
             builder.Property(x => x.Rate).HasColumnName("rate").HasPrecision(18, 4);
             builder.Property(x => x.Ratetype).HasColumnName("ratetype").HasMaxLength(20);
